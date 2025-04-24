@@ -1,6 +1,6 @@
 .home-container {
   min-height: 100vh;
-  background-color: #1A1A1A;
+  background-color: #0F1F29;
   padding: 1rem;
   padding-top: 0;
 }
@@ -21,17 +21,17 @@
   top: 0;
   z-index: 10;
   padding: 1rem;
-  background-color: #1A1A1A;
+  border-radius: 1.5rem;
+  background-color: #23333D;
   margin: -1rem -1rem 0;
 }
 
 .date-selector {
   display: flex;
   justify-content: space-between;
-  background-color: #141414;
+  background-color: #0F1F29;
   padding: 8px;
   border-radius: 1.5rem;
-  gap: 8px;
 }
 
 .date-tab {
@@ -53,14 +53,13 @@
 }
 
 .timer-section {
-  background-color: #141414;
+  background-color: #0F1F29;
   padding: 1rem;
   border-radius: 1.5rem;
-  margin-top: 1rem;
 }
 
 .card-section {
-  background-color: #282828;
+  background-color: #23333D;
   padding: 1rem;
   border-radius: 1.5rem;
   margin-bottom: 2rem;
@@ -103,7 +102,7 @@
 .timer-number {
   font-size: 1.5rem;
   font-weight: 500;
-  color: #FFC908;
+  color: #46C800;
 }
 
 .timer-label {
@@ -112,7 +111,7 @@
 }
 
 .timer-separator {
-  color: #FFC908;
+  color: #46C800;
   font-weight: bold;
   font-size: 1.5rem;
 }
@@ -174,7 +173,7 @@
 .sale-price {
   font-size: 17px;
   font-weight: bold;
-  color: #1A1A1A;
+  color: #0F1F29;
 }
 
 .original-price {
@@ -239,7 +238,7 @@
 }
 
 .modal-content h2 {
-  color: #1A1A1A;
+  color: #0F1F29;
   font-size: 18px;
   margin-bottom: 12px;
 }
@@ -258,7 +257,7 @@
 }
 
 .modal-pay {
-  background-color: #1A1A1A;
+  background-color: #0F1F29;
   color: white;
   border: none;
   padding: 12px 24px;
@@ -285,14 +284,14 @@
 }
 
 .modal-close:hover {
-  color: #1A1A1A;
+  color: #0F1F29;
 }
 
 .notification-banner {
-  background-color: #282828;
+  background-color: #23333D;
   border-radius: 16px;
   padding: 16px;
-  margin: 16px 0;
+  margin-bottom: 16px;
   display: flex;
   flex-direction: column;
   gap: 16px;
@@ -319,8 +318,8 @@
 }
 
 .notification-button {
-  background-color: #FFC908;
-  color: #1A1A1A;
+  background-color: #46C800;
+  color: #0F1F29;
   border: none;
   padding: 12px;
   border-radius: 8px;
@@ -332,5 +331,5 @@
 }
 
 .notification-button:hover {
-  background-color: #E6B400;
+  background-color: #5cd61a;
 } 

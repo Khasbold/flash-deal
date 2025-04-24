@@ -7,7 +7,7 @@ export default {
     theme: {
         extend: {
             backgroundColor: {
-                'dark': '#1A1A1A',
+                'dark': '#0F1F29',
                 'primary': '#FFB800',
             },
             colors: {

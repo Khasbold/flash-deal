@@ -1,26 +1,42 @@
 import React, { useEffect } from 'react'
 import { useState } from 'react'
+import { Bounce, ToastContainer, toast } from 'react-toastify';
 import './Home.css'
 
 interface Product {
   id: number;
   name: string;
-  image: string;
-  originalPrice: number;
-  salePrice: number;
-  stock: number;
-  isUnitel?: boolean;
-  validUntil?: string;
+  quantity: number;
+  discountedPrice: number;
+  actualPrice: number;
 }
 
 const Home = () => {
-  const [selectedDate, setSelectedDate] = useState({date: '05.09', time: '15:00', unix: 1746774000})
+  const [selectedDate, setSelectedDate] = useState({id: 1,date: '05.09', time: '15:00', unix: 1746774000})
   const [timeLeft, setTimeLeft] = useState({ days: '00', hours: '00', minutes: '00', seconds: '00' })
   const [showModal, setShowModal] = useState(false)
+  const [isLegit, setIsLegit] = useState('')
+  const [productList, setProductList] = useState([])
+  const [isStarted, setIsStarted] = useState(false);
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null)
-  const dates = [{date: '05.09', time: '15:00', unix: 1746774000 }, {date: '05.16', time: '15:00', unix: 1747378800 }, {date: '05.23', time: '15:00', unix: 1747983600 }, {date: '05.30', time: '15:00', unix: 1748588400 }, {date: '06.06', time: '15:00', unix: 1749193200 }];
+  const dates = [{id : 1, date: '05.09', time: '15:00', unix: 1746774000 }, {id : 2, date: '05.16', time: '15:00', unix: 1747378800 }, {id : 3, date: '05.23', time: '15:00', unix: 1747983600 }, {id : 4, date: '05.30', time: '15:00', unix: 1748588400 }, {id : 5, date: '06.06', time: '15:00', unix: 1749193200 }];
+
+  useEffect(() => {
+    fetch('http://10.136.32.220:8080/flash-deal/check/user?userId=12321', {
+      method: 'GET',
+    })
+      .then((res) => res.json())
+      .then((data) => {
+        console.log(data);
+        setIsLegit(data.status);
+      })
+      .catch((error) => {
+        console.log(error);
+      });
+  }, []);
   
   useEffect(() => {
+    
     const timer = setInterval(() => {
       const now = Math.floor(new Date().getTime() / 1000);
       
@@ -53,56 +69,69 @@ const Home = () => {
   const now = Math.floor(new Date().getTime() / 1000);
   const currentActiveDate = dates.find(date => date.unix > now);
   const isSelectedDateActive = selectedDate.unix === currentActiveDate?.unix;
-
-  const products = [
-    {
-      id: 1,
-      name: '[Эхлээгүй] iPhone 16 Pro Max 256GB',
-      image: '/image/product1.png',
-      originalPrice: 6488000,
-      salePrice: 59760,
-      stock: 3
-    },
-    {
-      id: 2,
-      name: 'iWatch 10 42mm',
-      image: '/image/iwatch.png',
-      originalPrice: 1000000,
-      salePrice: 20000,
-      stock: 0
-    },
-    {
-      id: 3,
-      name: 'AirPods 4',
-      image: '/image/product1.png',
-      originalPrice: 6488000,
-      salePrice: 59760,
-      stock: 0
-    },
-    {
-      id: 4,
-      name: 'Юнител эрх',
-      image: '/image/unitelLogo.png',
-      originalPrice: 500000,
-      salePrice: 300000,
-      stock: 2,
-      isUnitel: true,
-      validUntil: '2024.05.31'
-    },
-    {
-      id: 5,
-      name: '[Эрхгүй]iPhone 16 Pro Max 256GB',
-      image: '/image/product1.png',
-      originalPrice: 6488000,
-      salePrice: 59760,
-      stock: 3
-    }
-  ]
+  useEffect(() => {
+    fetch(`http://10.136.32.220:8080/flash-deal/week/stock?week=${selectedDate.id}`, {
+      method: 'GET',
+    })
+      .then((res) => res.json())
+      .then((data) => {
+        // ЭХЭЛСЭН БОЛГОВ
+        // setIsStarted(data.isDealActive);
+        setIsStarted(true);
+        setProductList(data.availableGifts);
+      });
+  }, [selectedDate]);
+  console.log('isStarted: ', isStarted);
+  useEffect(() => {
+    console.log('dddddddd:')
+    setInterval(() => {
+      //   fetch(`http://10.136.32.220:8080/flash-deal/week/stock?week=${currentActiveDate?.id}`, {
+      //     method: 'GET',
+      //   })
+      //     .then((res) => res.json())
+      //     .then((data) => {
+      //       // ЭХЭЛСЭН БОЛГОВ
+      //       // setIsStarted(data.isDealActive);
+      //       setIsStarted(true);
+      //       setProductList(data.availableGifts);
+      //     });
+      }, 1000);
+  }, [!isStarted]);
 
   const handleProductClick = (product: Product) => {
-    setSelectedProduct(product)
-    if (product.stock !== 0) {
+    if (isStarted) {
+      setSelectedProduct(product)
+      if (product.quantity == 0) {
+        toast.error('Уг бүтээгдэхүүн дууссан байна', {
+          position: "top-center",
+          autoClose: 2000,
+          hideProgressBar: true,
+          closeOnClick: true,
+          progress: 0,
+          theme: "light",
+          transition: Bounce,
+          });
+      } else if (product.quantity != 0 && isLegit == 'not ok') {
+        toast.warn('Уг бүтээгдэхүүн эрхгүй байна', {
+          position: "top-center",
+          autoClose: 2000,
+          hideProgressBar: true,
+          closeOnClick: true,
+          progress: 0,
+        });
+      } else {
       setShowModal(true)
+      }
+    } else {
+      toast.warn('Flash deal эхлэх болоогүй байна', {
+        position: "top-center",
+        autoClose: 2000,
+        hideProgressBar: true,
+        closeOnClick: true,
+        progress: 0,
+        theme: "light",
+        transition: Bounce,
+        });
     }
   }
 
@@ -113,6 +142,18 @@ const Home = () => {
 
   return (
     <div className="home-container">
+      <ToastContainer
+        style={{ marginTop: '40px'}}
+        position="top-center"
+        autoClose={2000}
+        hideProgressBar
+        newestOnTop={false}
+        closeOnClick={false}
+        rtl={false}
+        draggable
+        theme="light"
+        transition={Bounce}
+      />
       {/* Logo Section */}
       {/* Background Images */}
       <img src="/image/splash-left.png" alt="" className="splash-left" />
@@ -123,7 +164,7 @@ const Home = () => {
       {/* Flash Deal Logo */}
       <div className="logo-container" style={{ paddingBottom: '0px !important' }}>
         <div className="logo">
-          <img src="/image/homeFlashDeal.png" alt="Flashdeal" className="logo-image" />
+          <img src="/image/flashdeal.png" alt="Flashdeal" className="logo-image" />
         </div>
       </div>
 
@@ -145,14 +186,17 @@ const Home = () => {
       </div>
       )}
 
+      {/* Timer Section */}
+      <div className="card-section">
       {/* Date Selector - Sticky */}
       <div className="sticky-date-section">
         <div className="date-selector">
           {dates.map((date) => (
             <button
               key={date.date}
+              style={{}}
               className={`date-tab ${selectedDate.date === date.date ? 'active' : ''}`}
-              style={{ backgroundColor: date.date == '06.06' ? '#46C800' : 'transparent' }}
+              style={{ backgroundColor: date.date == '06.06' ? '#46C800' : selectedDate.date === date.date ? '#23333D' : 'transparent' }}
               onClick={() => setSelectedDate(date)}
             >
               {date.date}
@@ -160,13 +204,10 @@ const Home = () => {
           ))}
         </div>
       </div>
-
-      {/* Timer Section */}
-      <div className="card-section">
         <div className="timer-section">
           {isSelectedDateActive ? (
             <>
-              <p className="timer-info">Flash Deal эхлэх хүртэл:</p>
+              <p className="timer-info">Flash Deal эхлэх хугацаа: 2025.{selectedDate.date} {selectedDate.time}</p>
               <div className="timer-display">
                 <div className="timer-block">
                   <span className="timer-number">{timeLeft.days}</span>
@@ -201,43 +242,33 @@ const Home = () => {
       {/* Products Grid */}
       <div className="products-section">
       <div className="products-grid">
-        {products.map((product) => (
+        {productList.map((product: Product) => (
           <div key={product.id} className="product-card">
-            <div className={`stock-badge ${product.stock === 0 ? 'out-of-stock' : ''}`}>
-              {product.stock === 0 ? 'Дууссан' : `${product.stock} ширхэг`}
+            <div className={`stock-badge ${product.quantity === 0 ? 'out-of-stock' : ''}`}>
+              {product.quantity === 0 ? 'Дууссан' : `${product.quantity} ширхэг`}
             </div>
-            {product.isUnitel ? (
-              <div className="unitel-card" onClick={() => handleProductClick(product)}>
-                <img 
-                  src={product.image} 
-                  alt="Unitel" 
-                  className={`unitel-logo ${product.stock === 0 ? 'out-of-stock' : ''}`} 
-                  style={{ backgroundColor: 'white' }} 
-                />
-                <div className="unitel-info">
-                  <div className="product-price">
-                    <span className="sale-price">{product.salePrice.toLocaleString()}₮</span>
-                  </div>
-                  <p className="valid-until">[Хожсон]{product.validUntil} хүртэл ашиглах боломжтой</p>
-                </div>
-              </div>
-            ) : (
-              <>
                 <div onClick={() => handleProductClick(product)}>
                   <img 
-                    src={product.image} 
+                    src={product.name.includes('bichig') ? '/image/unitelLogo.png' : '/image/product1.png'} 
                     alt={product.name} 
-                    className={`product-image ${product.stock === 0 ? 'out-of-stock' : ''}`}
+                    className={`product-image ${product.quantity === 0 ? 'out-of-stock' : ''}`}
                     style={{ backgroundColor: 'white' }}
                   />
+                  {product.name.includes('bichig') ? <>
+                    <div className="unitel-info">
+                  <div className="product-price">
+                    <span className="sale-price">{product.actualPrice.toLocaleString()}₮</span>
+                  </div>
+                  <p className="valid-until">Toki-р нэгж, дата авах, төлбөр төлөхдөө ашиглах эрх</p>
+                </div>
+                </> : <>
                   <h3 className="product-name">{product.name}</h3>
                   <div className="product-price">
-                    <span className="sale-price">{product.salePrice.toLocaleString()}₮</span>
-                    <span className="original-price">{product.originalPrice.toLocaleString()}₮</span>
+                    <span className="sale-price">{!product.name.includes('bichig') ? product.discountedPrice.toLocaleString() : product.actualPrice.toLocaleString()}₮</span>
+                    {!product.name.includes('bichig') ? <span className="original-price">{product.actualPrice.toLocaleString()}₮</span> : <></>}
                   </div>
+                </>}
                 </div>
-              </>
-            )}
           </div>
         ))}
       </div>
