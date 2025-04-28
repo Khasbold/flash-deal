@@ -4,7 +4,7 @@ import { Bounce, ToastContainer, toast } from 'react-toastify';
 import './Home.css'
 
 interface Product {
-  id: number;
+  productId: number;
   name: string;
   quantity: number;
   discountedPrice: number;
@@ -16,26 +16,56 @@ const Home = () => {
   const [timeLeft, setTimeLeft] = useState({ days: '00', hours: '00', minutes: '00', seconds: '00' })
   const [showModal, setShowModal] = useState(false)
   const [isLegit, setIsLegit] = useState('')
+  // const [userId, setUserId] = useState('5ff7d646893101e0ef38a369'); // ok
+  // const [userId, setUserId] = useState('a3d5f8e2015f4c9a7bcde102'); // ready
+  // const [userId, setUserId] = useState('bb92734a8c11401b9e45fa2c'); // employee
+  // const [userId, setUserId] = useState('d14e9a0b6f814fcfa5de9a30'); // won
+  const [userId, setUserId] = useState('7c5eab90123c4567de8f10aa'); // paid
+  // const [userId, setUserId] = useState('e90d7b23acde1023456fe78a'); // unpaid
   const [productList, setProductList] = useState([])
   const [isStarted, setIsStarted] = useState(false);
+  const [jumpLink, setJumpLink] = useState('');
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null)
   const dates = [{id : 1, date: '05.09', time: '15:00', unix: 1746774000 }, {id : 2, date: '05.16', time: '15:00', unix: 1747378800 }, {id : 3, date: '05.23', time: '15:00', unix: 1747983600 }, {id : 4, date: '05.30', time: '15:00', unix: 1748588400 }, {id : 5, date: '06.06', time: '15:00', unix: 1749193200 }];
 
-  useEffect(() => {
-    fetch('http://10.136.32.220:8080/flash-deal/check/user?userId=12321', {
+
+  const checkUser = async () => {
+    fetch(`https://campaign.unitel.mn/flash-deal/v1/check/user?userId=${userId}`, {
       method: 'GET',
     })
       .then((res) => res.json())
       .then((data) => {
         console.log(data);
         setIsLegit(data.status);
+        if (data.status == 'won') {
+          setShowModal(true);
+        }
       })
       .catch((error) => {
         console.log(error);
       });
-  }, []);
-  
+  };
+  const getProducts = async () => {
+    fetch(`https://campaign.unitel.mn/flash-deal/v1/week/stock?week=${selectedDate.id}`, {
+      method: 'GET',
+    })
+      .then((res) => res.json())
+      .then((data) => {
+        // ЭХЭЛСЭН БОЛГОВ
+        // setIsStarted(data.isDealActive);
+        setIsStarted(true);
+        setProductList(data.availableGifts[0]);
+      });
+  };
+
   useEffect(() => {
+    checkUser();
+  }, []);
+
+  useEffect(() => {
+    if (selectedDate.id == 1) {
+      setIsStarted(true);
+    }
     
     const timer = setInterval(() => {
       const now = Math.floor(new Date().getTime() / 1000);
@@ -70,18 +100,8 @@ const Home = () => {
   const currentActiveDate = dates.find(date => date.unix > now);
   const isSelectedDateActive = selectedDate.unix === currentActiveDate?.unix;
   useEffect(() => {
-    fetch(`http://10.136.32.220:8080/flash-deal/week/stock?week=${selectedDate.id}`, {
-      method: 'GET',
-    })
-      .then((res) => res.json())
-      .then((data) => {
-        // ЭХЭЛСЭН БОЛГОВ
-        // setIsStarted(data.isDealActive);
-        setIsStarted(true);
-        setProductList(data.availableGifts);
-      });
+    getProducts();
   }, [selectedDate]);
-  console.log('isStarted: ', isStarted);
   useEffect(() => {
     console.log('dddddddd:')
     setInterval(() => {
@@ -99,6 +119,7 @@ const Home = () => {
   }, [!isStarted]);
 
   const handleProductClick = (product: Product) => {
+    console.log('product: ', product);
     if (isStarted) {
       setSelectedProduct(product)
       if (product.quantity == 0) {
@@ -119,8 +140,42 @@ const Home = () => {
           closeOnClick: true,
           progress: 0,
         });
-      } else {
-      setShowModal(true)
+      } else if (isLegit == 'employee') {
+        toast.warn('Уучлаарай, Энэ удаагийн урамшуулалт нөхцөлд Юнител группийн ажилтнууд хамрагдах боломжгүй байна. 😔 ', {
+          position: "top-center",
+          autoClose: 2000,
+          hideProgressBar: true,
+          closeOnClick: true,
+          progress: 0,
+        });
+      } else if (product.quantity != 0 && isLegit == 'won' || isLegit == 'paid') {
+        toast.warn('Та хожсон тул дахин бүтээгдэхүүн авах боломжгүй', {
+          position: "top-center",
+          autoClose: 2000,
+          hideProgressBar: true,
+          closeOnClick: true,
+          progress: 0,
+        });
+      } else if (isLegit == 'ready') {
+        fetch(`https://campaign.unitel.mn/flash-deal/v1/trybuy`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            userId: userId,
+            productId: product.productId,
+          }),
+        })
+          .then((res) => res.json())
+          .then((data) => {
+            console.log('data: ', data);
+            if (data.status == 'success') {
+              setJumpLink(data.deepLink);
+              checkUser();
+            }
+            getProducts();
+          });
       }
     } else {
       toast.warn('Flash deal эхлэх болоогүй байна', {
@@ -139,6 +194,10 @@ const Home = () => {
     setShowModal(false)
     setSelectedProduct(null)
   }
+  const changeUserId = (userId: string) => {
+    setUserId(userId);
+    checkUser();
+  }
 
   return (
     <div className="home-container">
@@ -155,17 +214,35 @@ const Home = () => {
         transition={Bounce}
       />
       {/* Logo Section */}
-      {/* Background Images */}
-      <img src="/image/splash-left.png" alt="" className="splash-left" />
-      <img src="/image/splash-right.png" alt="" className="splash-right" />
-      <img src="/image/tail-left.png" alt="" className="tail-left" />
-      <img src="/image/tail-right.png" alt="" className="tail-right" />
 
       {/* Flash Deal Logo */}
       <div className="logo-container" style={{ paddingBottom: '0px !important' }}>
         <div className="logo">
           <img src="/image/flashdeal.png" alt="Flashdeal" className="logo-image" />
         </div>
+      </div>
+      <div style={{ margin: '20px', display: 'flex', gap: '10px', alignItems: 'center' }}>
+        <input
+          type="text"
+          value={userId}
+          defaultValue={userId}
+          onChange={(e) => changeUserId(e.target.value)}
+          placeholder="Enter User ID"
+          style={{ color: 'white', padding: '8px', borderRadius: '4px', border: '1px solid #ccc' }}
+        />
+        <button
+          onClick={() => checkUser()}
+          style={{
+            padding: '8px 16px',
+            backgroundColor: '#007bff',
+            color: 'white',
+            border: 'none',
+            borderRadius: '4px',
+            cursor: 'pointer'
+          }}
+        >
+          Update User
+        </button>
       </div>
 
       {/* Notification Banner */}
@@ -177,12 +254,27 @@ const Home = () => {
         <button className="notification-button">Төлбөр төлөх</button>
       </div>
       )}
-      {selectedDate.date !== '06.06' && (
+      {isLegit == 'ok' && (
         <div className="notification-banner">
           <div className="notification-content">
           <p>Та 2025.04.22 - 2025.06.06-ий хооронд гар утас худалдан авснаар Flashdeal-д оролцох боломжтой.</p>
         </div>
-        <button className="notification-button">Гар утас авах</button>
+        <button className="notification-button" onClick={() => window.location.replace("https://link.toki.mn/ykqv")}>Гар утас авах</button>
+      </div>
+      )}
+      {isLegit == 'employee' && (
+        <div className="notification-banner">
+          <div className="notification-content">
+          <p>Уучлаарай, Энэ удаагийн урамшуулалт нөхцөлд Юнител группийн ажилтнууд хамрагдах боломжгүй байна. 😔</p>
+        </div>
+      </div>
+      )}
+      {isLegit == 'won' && (
+        <div className="notification-banner">
+          <div className="notification-content">
+          <p>🎉Баяр хүргэе! Та маш хурдтай байж Flash Deal-н ялагч боллоо. Та төлбөр төлөлтөө бүрэн хийж худалдан авалтаа баталгаажуулаарай. 😉</p>
+        </div>
+        <button className="notification-button" onClick={() => window.location.replace(jumpLink)} >Төлбөр төлөх</button>
       </div>
       )}
 
@@ -194,7 +286,6 @@ const Home = () => {
           {dates.map((date) => (
             <button
               key={date.date}
-              style={{}}
               className={`date-tab ${selectedDate.date === date.date ? 'active' : ''}`}
               style={{ backgroundColor: date.date == '06.06' ? '#46C800' : selectedDate.date === date.date ? '#23333D' : 'transparent' }}
               onClick={() => setSelectedDate(date)}
@@ -249,12 +340,12 @@ const Home = () => {
             </div>
                 <div onClick={() => handleProductClick(product)}>
                   <img 
-                    src={product.name.includes('bichig') ? '/image/unitelLogo.png' : '/image/product1.png'} 
+                    src={product.name.includes('эрхийн бичиг') ? `/image/${product.name} ${product.actualPrice}.jpg` : `/image/${product.name}.png`} 
                     alt={product.name} 
                     className={`product-image ${product.quantity === 0 ? 'out-of-stock' : ''}`}
                     style={{ backgroundColor: 'white' }}
                   />
-                  {product.name.includes('bichig') ? <>
+                  {product.name.includes('эрхийн бичиг') ? <>
                     <div className="unitel-info">
                   <div className="product-price">
                     <span className="sale-price">{product.actualPrice.toLocaleString()}₮</span>
@@ -264,8 +355,8 @@ const Home = () => {
                 </> : <>
                   <h3 className="product-name">{product.name}</h3>
                   <div className="product-price">
-                    <span className="sale-price">{!product.name.includes('bichig') ? product.discountedPrice.toLocaleString() : product.actualPrice.toLocaleString()}₮</span>
-                    {!product.name.includes('bichig') ? <span className="original-price">{product.actualPrice.toLocaleString()}₮</span> : <></>}
+                    <span className="sale-price">{!product.name.includes('эрхийн бичиг') ? product.discountedPrice.toLocaleString() : product.actualPrice.toLocaleString()}₮</span>
+                    {!product.name.includes('эрхийн бичиг') ? <span className="original-price">{product.actualPrice.toLocaleString()}₮</span> : <></>}
                   </div>
                 </>}
                 </div>
@@ -278,21 +369,7 @@ const Home = () => {
       {showModal && (
         <div className="modal-overlay" onClick={handleCloseModal}>
           <div className="modal-content" onClick={e => e.stopPropagation()}>
-            {selectedProduct?.isUnitel ? (
-              <>
-                <h2>Баяр хүргэе!</h2>
-                <p>Та Юнител эрх авах боломжтой</p>
-                <p>Та хожсон тул яарч сандралгүйгээр төлбөрөө төлж шагналаа авна уу 😉</p>
-                <div className="modal-buttons">
-                  <button className="modal-pay" onClick={() => console.log('Payment')}>
-                    Төлбөр төлөх
-                  </button>
-                  <button className="modal-close" onClick={handleCloseModal}>
-                    Хаах
-                  </button>
-                </div>
-              </>
-            ) : selectedProduct?.name.includes('[Эрхгүй]') ? (
+            {isLegit == 'ok' ? (
                 <>
                   <h2>Уучлаарай</h2>
                   <p>Танд Flash Deal-д оролцох эрх үүсээгүй байна.  Та Toki-с гар утас худалдан аваад дараагийн Flash Deal-д оролцоорой. 😉</p>
@@ -304,6 +381,39 @@ const Home = () => {
                       Буцах
                     </button>
                   </div>
+                </>
+              ) : isLegit == 'employee' ? (
+                <>
+                  <h2>Уучлаарай</h2>
+                  <p>Энэ удаагийн урамшуулалт нөхцөлд Юнител группийн ажилтнууд хамрагдах боломжгүй байна. 😔</p>
+                  <div className="modal-buttons">
+                    <button className="modal-close" onClick={handleCloseModal}>
+                      Буцах
+                    </button>
+                  </div>
+                </>
+              ) : isLegit == 'paid' ? (
+                <>
+                  <h2>Уучлаарай</h2>
+                  <p>Хэрэглэгч та Flash Deal-с зөвхөн 1 удаа худалдан авалт хийх боломжтойг анхаарна уу.</p>
+                  <div className="modal-buttons">
+                    <button className="modal-close" onClick={handleCloseModal}>
+                      Буцах
+                    </button>
+                  </div>
+                </>
+              ) : isLegit == 'won' ? (
+                <>
+                  <h2>🎉Баяр хүргэе!</h2>
+                  <p>Та маш хурдтай байж Flash Deal-н ялагч боллоо. Та төлбөр төлөлтөө бүрэн хийж худалдан авалтаа баталгаажуулаарай. 😉</p>
+                  <div className="modal-buttons">
+                  <button className="modal-pay" onClick={() => console.log('Payment')}>
+                    Төлбөр төлөх
+                  </button>
+                  <button className="modal-close" onClick={handleCloseModal}>
+                    Хаах
+                  </button>
+                </div>
                 </>
               ) : (
               <>
