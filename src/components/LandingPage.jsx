@@ -5,15 +5,15 @@ const LandingPage = () => {
   return (
     <div className="container">
       {/* Background Images */}
-      <img src="/image/splash-left.png" alt="" className="splash-left" />
-      <img src="/image/splash-right.png" alt="" className="splash-right" />
-      <img src="/image/tail-left.png" alt="" className="tail-left" />
-      <img src="/image/tail-right.png" alt="" className="tail-right" />
+      <img src="/toki/flash-deal/image/splash-left.png" alt="" className="splash-left" />
+      <img src="/toki/flash-deal/image/splash-right.png" alt="" className="splash-right" />
+      <img src="/toki/flash-deal/image/tail-left.png" alt="" className="tail-left" />
+      <img src="/toki/flash-deal/image/tail-right.png" alt="" className="tail-right" />
 
       {/* Flash Deal Logo */}
       <div className="logo-container">
         <div className="logo">
-          <img src="/image/flashdeal.png" alt="Flashdeal" className="logo-image" />
+          <img src="/toki/flash-deal/image/flashdeal.png" alt="Flashdeal" className="logo-image" />
         </div>
       </div>
 

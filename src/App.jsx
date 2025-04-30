@@ -13,16 +13,16 @@ function App() {
   return (
     <div className="container">
       {/* Background Images */}
-      <img src="/image/splash-left.png" alt="" className="splash-left" />
-      <img src="/image/splash-right.png" alt="" className="splash-right" />
-      <img src="/image/tail-left.png" alt="" className="tail-left" />
-      <img src="/image/tail-right.png" alt="" className="tail-right" />
+      <img src={`${import.meta.env.VITE_BASE_PATH}image/splash-left.png`} alt="" className="splash-left" />
+      <img src={`${import.meta.env.VITE_BASE_PATH}image/splash-right.png`} alt="" className="splash-right" />
+      <img src={`${import.meta.env.VITE_BASE_PATH}image/tail-left.png`} alt="" className="tail-left" />
+      <img src={`${import.meta.env.VITE_BASE_PATH}image/tail-right.png`} alt="" className="tail-right" />
 
       {/* Flash Deal Logo */}
       <div className="logo-container">
         {/* dsadasdasd */}
         <div className="logo">
-          <img src="/image/flashdeal.png" alt="Flashdeal" className="logo-image" />
+          <img src={`${import.meta.env.VITE_BASE_PATH}image/flashdeal.png`} alt="Flashdeal" className="logo-image" />
         </div>
       </div>
 
@@ -34,7 +34,7 @@ function App() {
           </div>
           <div className="feature-content">
             <h3 style={{ color: '#FFFFFF' }}>7 хоног бүр Flashdeal</h3>
-            <p style={{ color: '#9CA3AF' }}>2025,05.09-2025.06.06-г дуустал 7 хоног бүрийн Баасан гарагт</p>
+            <p style={{ color: '#9CA3AF' }}>2025.05.09-2025.06.06-г дуустал 7 хоног бүрийн Баасан гарагт</p>
           </div>
         </div>
 
@@ -44,7 +44,7 @@ function App() {
           </div>
           <div className="feature-content">
             <h3 style={{ color: '#FFFFFF' }}>1 утас аваад 5 Flash Deal-д оролц</h3>
-            <p style={{ color: '#9CA3AF' }}>2025.04.30 -2025.06.05-ны хооронд Toki-с гар утас авсан бүх хэрэглэгч</p>
+            <p style={{ color: '#9CA3AF' }}>2025.05.01 -2025.06.05-ны хооронд Toki-с гар утас авсан бүх хэрэглэгч</p>
           </div>
         </div>
 
