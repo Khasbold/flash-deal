@@ -3,7 +3,6 @@ import { useState } from 'react'
 import { Bounce, ToastContainer, toast } from 'react-toastify';
 import { IoMdClose } from "react-icons/io";
 import './Home.css'
-import { ToastContentProps } from 'react-toastify';
 
 interface Product {
   productId: string;
@@ -14,21 +13,15 @@ interface Product {
 
 }
 
-interface LegitObj {
-  userId: string;
-  deeplink?: string;
-  productName?: string;
-}
-
 const Home = () => {
   const urlParams = new URLSearchParams(window.location.search);
     const urltokenId = urlParams.get('tokenid');
 
-  const [selectedDate, setSelectedDate] = useState({id: 2, date: '05.16', time: '13:00', unix: 1746597600})
+  const [selectedDate, setSelectedDate] = useState({id: 1, date: '05.09', time: '13:00', unix: 1746597600})
   const [timeLeft, setTimeLeft] = useState({ days: '00', hours: '00', minutes: '00', seconds: '00' })
   const [showModal, setShowModal] = useState(false)
   const [isLegit, setIsLegit] = useState('')
-  const [legitObj, setLegitObj] = useState<LegitObj | undefined>()
+  const [legitObj, setLegitObj] = useState()
   const [wonProduct, setWonProduct] = useState('')
   const [tokenId, setTokenId] = useState(urltokenId); // ok
   const [productList, setProductList] = useState([])
@@ -43,12 +36,8 @@ const Home = () => {
   const [diff, setDiff] = useState<number>();
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null)
   const dates = [{id : 1, date: '05.09', time: '13:00', unix: 1746766800 }, {id : 2, date: '05.16', time: '13:00', unix: 1747371600 }, {id : 3, date: '05.23', time: '13:00', unix: 1747976400 }, {id : 4, date: '05.30', time: '13:00', unix: 1748581200 }, {id : 5, date: '06.06', time: '13:00', unix: 1749186000 }];
-  const [lastServerSync, setLastServerSync] = useState<number>(0);
-  const [timeDrift, setTimeDrift] = useState<number>(0);
-  const SYNC_INTERVAL = 15000; // Sync every 30 seconds
-  const MAX_DRIFT = 2000; // Maximum allowed time drift in milliseconds
   const checkUser = async (val?) => {
-    fetch(`https://campaign.unitel.mn/flash-deal/v2/check/user?tokenId=${tokenId}`, {
+    fetch(`https://campaign.unitel.mn/toki/flash-deal/v2/check/user?tokenId=${tokenId}`, {
       method: 'GET',
     })
       .then((res) => res.json())
@@ -68,54 +57,29 @@ const Home = () => {
         console.log(error);
       });
   };
+  
   const getProducts = async () => {
-    try {
-      const now = new Date().getTime();
-      const response = await fetch(`https://campaign.unitel.mn/flash-deal/v2/week/stock?week=${selectedDate.id}&time=${now}`, {
-        method: 'GET',
-      });
-      const data = await response.json();
-      
-      // ЭХЭЛСЭН БОЛГОВ
-      setProductList(data.availableGifts[0]);
-
-      setStockObj(data);
-      setSystemDiff(data.dealStartDate - data.timestamp);
-      setDiff(data.dif);
-      setIsSelectedDateActive(data.availableGifts[0].some(item => item.quantity > 0));
-      
-      if (isStarted) {
-        const available = data.availableGifts[0].some(item => item.quantity > 0);
-        console.log('available', available);
-        setIsSelectedDateActive(available);
-        setIsStarted(available)
-      }
-      if (data.isDealActive == false) {
-        console.log('AAAAAA 2: ', data.isDealActive);
+    const now = new Date().getTime();
+    fetch(`https://campaign.unitel.mn/toki/flash-deal/v2/week/stock?week=${selectedDate.id}&time=${now}`, {
+      method: 'GET',
+    })
+      .then((res) => res.json())
+      .then((data) => {
+        // ЭХЭЛСЭН БОЛГОВ
+        setStockObj(data);
+        setSystemDiff(data.dealStartDate - data.timestamp);
+        setDiff(data.dif);
         setIsSelectedDateActive(data.availableGifts[0].some(item => item.quantity > 0));
-      }
-      console.log('data.timestamp > now: ', data.timestamp > now)
-      if (data.dealStartDate > now) {
-        setUi(false);
-      }
-
-      const serverTime = data.timestamp;
-      const localTime = Date.now();
-      const newDrift = serverTime - localTime;
-      
-      // If drift is too large, something is wrong with client time
-      if (Math.abs(newDrift) > MAX_DRIFT) {
-        return false;
-      }
-      
-      console.log('TRUE')
-      setTimeDrift(newDrift);
-      setLastServerSync(localTime);
-      return true;
-    } catch (error) {
-      console.error('Failed to get products:', error);
-      return false;
-    }
+        // setIsSelectedDateActive(data.timestamp < data.dealStartDate && data.isDealActive);
+        // setSelectedDate({id : selectedDate.id, date: '05.09', time: '13:00', unix: data.dealStartDate})
+        if (isStarted) {
+          const available = data.availableGifts[0].some(item => item.quantity > 0);
+          console.log('available', available);
+          setIsSelectedDateActive(available);
+          setIsStarted(available)
+        }
+        setProductList(data.availableGifts[0]);
+      });
   };
   console.log('isStarted: ', isStarted);
   useEffect(() => {
@@ -123,44 +87,26 @@ const Home = () => {
     setMeNow(Date.now());
     checkUser();
   }, []);
-  console.log('AAAA 3', isSelectedDateActive);
 
-  // Add periodic server time sync
-  // useEffect(() => {
-  //   const syncTimer = setInterval(() => {
-  //     getProducts();
-  //   }, SYNC_INTERVAL);
-
-  //   // Initial sync
-  //   getProducts();
-
-  //   return () => clearInterval(syncTimer);
-  // }, []);
-
-  // Modify the existing timer effect
   useEffect(() => {
     if (!stockObj?.dealStartDate || !stockObj?.timestamp || !systemDiff) return;
 
-    // Calculate initial server time with drift compensation
+    // Calculate initial server time
     const initialServerTime = stockObj.timestamp;
     const initialLocalTime = Date.now();
     const timeOffset = initialServerTime - initialLocalTime;
 
     const timer = setInterval(() => {
-      // Calculate current server time based on local time + offset + drift
+      // Calculate current server time based on local time + offset
       const currentLocalTime = Date.now();
-      const currentServerTime = currentLocalTime + timeOffset + timeDrift;
+      const currentServerTime = currentLocalTime + timeOffset;
       const remaining = stockObj.dealStartDate - currentServerTime;
 
       if (isSelectedDateActive) {
+        console.log('AAAAAAAAAAA remaining', remaining)
         if (remaining <= 1000) {
-          // Validate with server before starting
-          getProducts().then(isValid => {
-            if (isValid) {
-              setIsStarted(true);
-              getProducts();
-            }
-          });
+          setIsStarted(true);
+          getProducts();
         }
         if (remaining <= 0) {
           setUi(true);
@@ -178,14 +124,13 @@ const Home = () => {
     }, 1000);
 
     return () => clearInterval(timer);
-  }, [stockObj, systemDiff, isSelectedDateActive, timeDrift]);
+  }, [stockObj, systemDiff, isSelectedDateActive]);
 
   // Add visibility change handler to sync time when app becomes visible
   useEffect(() => {
     const handleVisibilityChange = () => {
       if (document.visibilityState === 'visible') {
         getProducts(); // Refresh server time when app becomes visible
-        checkUser();
       }
     };
 
@@ -202,8 +147,10 @@ const Home = () => {
     getProducts();
   }, [selectedDate]);
 
-  function WithCustomProgressBar(props: ToastContentProps<{ message: string }>) {
-    const { closeToast, data } = props;
+  function WithCustomProgressBar({
+    closeToast,
+    data,
+  }: { message: string }) {
     setTimeout(() => {
       closeToast();
     }, 2000);
@@ -214,96 +161,80 @@ const Home = () => {
       </div>
     );
   }
-  const handleProductClick = async (product: Product) => {
-    setSelectedProduct(product);
-// Validate server time before allowing purchase
-const isValid = await getProducts();
-console.log('AAAAAAA: ', isValid);
-if (!isValid) {
-  toast.error('Төхөөрөмжийн хугацааг өөрчлөх хориотой тул та шударгаар оролцоно уу! [Date Time Set Automatically!]');
-  return;
-}
-
-if (product.quantity == 0) {
-  toast(WithCustomProgressBar, {
-    autoClose: 8000,
-    customProgressBar: true,
-    closeButton: false,
-    data: {
-      message: 'Уг бүтээгдэхүүн дууссан байна',
-    },
-  });
-} else if (product.quantity != 0 && isLegit == 'ok') {
-  toast(WithCustomProgressBar, {
-    autoClose: 8000,
-    customProgressBar: true,
-    closeButton: false,
-    data: {
-      message: 'Танд Flash Deal-д оролцох эрх үүсээгүй байна. Toki-с гар утас худалдан аваад Flash Deal-д оролцоорой. 😉',
-    },
-  });
-} else if ((product.quantity != 0 && isLegit == 'ready' && !isStarted) || stockObj.isDealActive == false) {
-  toast(WithCustomProgressBar, {
-    autoClose: 8000,
-    customProgressBar: true,
-    closeButton: false,
-    data: {
-      message: 'Хугацаа эхлээгүй байна',
-    },
-  });
-} else if (isLegit == 'employee') {
-  toast(WithCustomProgressBar, {
-    autoClose: 8000,
-    customProgressBar: true,
-    closeButton: false,
-    data: {
-      message: 'Уучлаарай, Энэ удаагийн урамшуулалт нөхцөлд Юнител группийн ажилтнууд хамрагдах боломжгүй байна. 😔',
-    },
-  });
-} else if (product.quantity != 0 && (isLegit == 'won' || isLegit == 'paid')) {
-  toast(WithCustomProgressBar, {
-    autoClose: 8000,
-    customProgressBar: true,
-    closeButton: false,
-    data: {
-      message: 'Хэрэглэгч та Flash Deal-с зөвхөн 1 удаа худалдан авалт хийх боломжтойг анхаарна уу.',
-    },
-  });
-} else if (product.quantity != 0 && isStarted && (isLegit == 'ready')) {
-  console.log('TRY buy');
-  if (!legitObj?.userId) {
-    toast.error('User information not available');
-    return;
-  }
-  
-  fetch(`https://campaign.unitel.mn/flash-deal/v2/trytobuy87`, {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify({
-      userId: legitObj.userId,
-      productId: product.productId,
-      clientTime: Date.now(),
-      timeDrift: timeDrift
-    }),
-  })
-    .then((res) => res.json())
-    .then((data) => {
-      getProducts();
-      if (data.error) {
-        console.log('ERROR: ', data.error);
-        toast.error(data.error);
+  const handleProductClick = (product: Product) => {
+    console.log('product: ', product);
+      setSelectedProduct(product)
+      if (product.quantity == 0) {
+        toast(WithCustomProgressBar, {
+          autoClose: 8000,
+          customProgressBar: true,
+          closeButton: false,
+          data: {
+            message: 'Уг бүтээгдэхүүн дууссан байна',
+          },
+        });
+      } else if (product.quantity != 0 && isLegit == 'ok') {
+        toast(WithCustomProgressBar, {
+          autoClose: 8000,
+          customProgressBar: true,
+          closeButton: false,
+          data: {
+            message: 'Танд Flash Deal-д оролцох эрх үүсээгүй байна. Toki-с гар утас худалдан аваад Flash Deal-д оролцоорой. 😉',
+          },
+        });
+      } else if (product.quantity != 0 && isLegit == 'ready' && !isStarted) {
+        toast(WithCustomProgressBar, {
+          autoClose: 8000,
+          customProgressBar: true,
+          closeButton: false,
+          data: {
+            message: 'Хугацаа эхлээгүй байна',
+          },
+        });
+      } else if (isLegit == 'employee') {
+        toast(WithCustomProgressBar, {
+          autoClose: 8000,
+          customProgressBar: true,
+          closeButton: false,
+          data: {
+            message: 'Уучлаарай, Энэ удаагийн урамшуулалт нөхцөлд Юнител группийн ажилтнууд хамрагдах боломжгүй байна. 😔',
+          },
+        });
+      } else if (product.quantity != 0 && isLegit == 'won' || isLegit == 'paid') {
+        toast(WithCustomProgressBar, {
+          autoClose: 8000,
+          customProgressBar: true,
+          closeButton: false,
+          data: {
+            message: 'Хэрэглэгч та Flash Deal-с зөвхөн 1 удаа худалдан авалт хийх боломжтойг анхаарна уу.',
+          },
+        });
+      } else if (product.quantity != 0 && isStarted && (isLegit == 'ready' || isLegit == 'ok' || isLegit == 'not ok' || isLegit == 'employee')) {
+        console.log('TRY buy');
+        fetch(`https://campaign.unitel.mn/toki/flash-deal/v2/trybuy13`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            userId: legitObj.userId,
+            productId: product.productId,
+          }),
+        })
+          .then((res) => res.json())
+          .then((data) => {
+                      getProducts();
+                      if (data.error) {
+                        console.log('ERROR: ', data.error);
+                      } else {
+                        setJumpLink(data.deeplink);
+                        checkUser();
+                      }
+          });
       } else {
-        setJumpLink(data.deeplink);
-        checkUser();
+        console.log('ELSE')
       }
-    });
-} else {
-  console.log('ELSE')
-}
-    
-  };
+  }
 
   const handleCloseModal = () => {
     setShowModal(false)
@@ -315,7 +246,7 @@ if (product.quantity == 0) {
     setTokenId(tokenId);
     checkUser();
   }
-  console.log('isSelectedDateActive: ', isSelectedDateActive, ui)
+
   return (
     <div className="home-container">
       <ToastContainer
@@ -366,12 +297,12 @@ if (product.quantity == 0) {
       {isLegit == 'won' && (
         <div className="notification-banner">
           <div className="notification-content">
-            <p>🎉 Баяр хүргэе! Та Flash Deal-с <p style={{color: '#46C800', fontSize: '18px', fontWeight: 'bold'}}>{wonProduct}</p> амжилттай худалдан авлаа. Төлбөр төлөлтөө бүрэн хийж худалдан авалтаа баталгаажуулаарай. 😉</p>
-          </div>
-          {legitObj?.deeplink && <a href={legitObj.deeplink}><button className="notification-button">Төлбөр төлөх</button></a>}
+          <p>🎉 Баяр хүргэе! Та Flash Deal-с <p style={{color: '#46C800', fontSize: '18px', fontWeight: 'bold'}}>{wonProduct}</p> амжилттай худалдан авлаа. Төлбөр төлөлтөө бүрэн хийж худалдан авалтаа баталгаажуулаарай. 😉</p>
         </div>
+        <a href={legitObj.deeplink}><button className="notification-button">Төлбөр төлөх</button></a>
+      </div>
       )}
-      {isLegit == 'paid' && legitObj?.productType == 'physical' && (
+      {isLegit == 'paid' && (
         <div className="notification-banner">
           <div className="notification-content">
           <p>🎉 Баяр хүргэе! Та Flash Deal-с <p style={{color: '#46C800', fontSize: '18px', fontWeight: 'bold'}}>{wonProduct}</p> амжилттай худалдан авлаа. Худалдан авсан бүтээгдэхүүнээ Юнителийн "Сэнтрал Тауэр" салбарт өөрийн биеэр, бичиг баримттайгаа хандан аваарай. 😉</p>
@@ -379,19 +310,12 @@ if (product.quantity == 0) {
         {/* <a href={legitObj.deeplink}><button className="notification-button">Төлбөр төлөх</button></a> */}
       </div>
       )}
-    {isLegit == 'paid' && legitObj?.productType != 'physical' && (<div className="notification-banner">
-        <div className="notification-content">
-        <p>Та Flash Deal-с <p style={{color: '#46C800', fontSize: '18px', fontWeight: 'bold'}}>{wonProduct}</p> амжилттай худалдан авсан байна. Таны худалдан авсан эрх Toki хэтэвч хэсэгт нь идэвхэжсэн байгаа шүү. 🤗</p>
-      </div>
-      <a href="https://link.toki.mn/Prod_Wallet" target='_blank'><button className="notification-button">Хэтэвч шалгах</button></a>
-    </div>)}
-     
       {/* {isLegit == 'paid' && (
         <div className="notification-banner">
           <div className="notification-content">
           <p>Та Flash Deal-с <p style={{color: '#46C800', fontSize: '18px', fontWeight: 'bold'}}>{wonProduct}</p> амжилттай худалдан авсан байна. Таны худалдан авсан эрх Toki хэтэвч хэсэгт нь идэвхэжсэн байгаа шүү. 🤗</p>
         </div>
-        <a href="https://link.toki.mn/Prod_Wallet" target='_blank'><button className="notification-button">Хэтэвч шалгах</button></a>
+        <a href="https://staging-links.toki.mn/7Ren" target='_blank'><button className="notification-button">Хэтэвч шалгах</button></a>
       </div>
       )} */}
       {isLegit == 'ready' && (
@@ -461,7 +385,7 @@ if (product.quantity == 0) {
                 </div>
               </div>
             </>
-          ) : isSelectedDateActive && ui ? (
+          ) : ui ? (
             <div className="timer-display">
               <div className="timer-block">
                   <span className="timer-number">А</span>
@@ -502,11 +426,6 @@ if (product.quantity == 0) {
                
                 
               </div>
-          ) : !isSelectedDateActive && stockObj?.timestamp > meNow ? (
-            <div style={{opacity: '50%'}}>
-            <p className="timer-info" style={{marginTop: '8px'}}>Flash Deal дууссан</p>
-            <p className="timer-info-1">2025.{selectedDate.date} • {selectedDate.time}</p>
-            </div>
           ) : (
             <>
             <p className="timer-info" style={{marginTop: '8px'}}>Flash Deal эхлэх хугацаа</p>
@@ -515,7 +434,7 @@ if (product.quantity == 0) {
           )}
         </div>
       </div>
-          {console.log('DDDDDDDD: ', !isSelectedDateActive, stockObj?.timestamp, meNow)}
+
       {/* Products Grid */}
       <div className="products-section">
       <div className="products-grid">
@@ -594,25 +513,18 @@ if (product.quantity == 0) {
                   </button>
                 </div>
                 </>
-              )  : isLegit == 'paid' && legitObj?.productType == 'physical' ? (
+              )  : isLegit == 'paid' ? (
                 <>
                   <h2>🎉Баяр хүргэе!</h2>
                   <p>
                   Та Flash Deal-с <p style={{color: '#46C800', fontSize: '18px', fontWeight: 'bold'}}>{wonProduct}</p> амжилттай худалдан авсан байна. Худалдан авсан бүтээгдэхүүнээ Юнителийн "Сэнтрал Тауэр" салбарт өөрийн биеэр, бичиг баримттайгаа хандан аваарай. 🤗 
                   Салбарын хаяг, цагийн хуваарь: <a href="https://www.unitel.mn/unitel/branch" style={{fontSize: '18px', fontWeight: 'bold'}}>www.unitel.mn/unitel/branch</a> 
                   </p>
+                  {/* <p>
+                  Та Flash Deal-с <p style={{color: '#46C800', fontSize: '18px', fontWeight: 'bold'}}>{wonProduct}</p> амжилттай худалдан авсан байна. Худалдан авсан бүтээгдэхүүнээ Юнителийн Сэнтрал Tayэр салбарт өөрийн биеэр, бичиг баримттайгаа хандан аваарай. 🤗 
+                  Салбарын хаяг, цагийн хуваарь: <a href="https://www.unitel.mn/unitel/branch" style={{fontSize: '18px', fontWeight: 'bold'}}>www.unitel.mn/unitel/branch</a> 
+                  </p> */}
                   <div className="modal-buttons">
-                  <button className="modal-close" onClick={handleCloseModal}>
-                    Хаах
-                  </button>
-                </div>
-                </>
-              ) : isLegit == 'paid' && legitObj?.productType != 'physical' ? (
-                <>
-                  <h2>🎉Баяр хүргэе!</h2>
-                  <p>Та Flash Deal-с <p style={{color: '#46C800', fontSize: '18px', fontWeight: 'bold'}}>{wonProduct}</p> амжилттай худалдан авсан байна. Таны худалдан авсан эрх Toki хэтэвч хэсэгт нь идэвхэжсэн байгаа шүү. 🤗</p>
-                  <div className="modal-buttons">
-                  <a href='https://link.toki.mn/Prod_Wallet'><button className="modal-pay">Хэтэвч шалгах</button></a>
                   <button className="modal-close" onClick={handleCloseModal}>
                     Хаах
                   </button>

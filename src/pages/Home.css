@@ -36,11 +36,12 @@
 
 .date-tab {
   flex: 1;
-  padding: 8px;
+  padding: 10px;
   border: none;
   background: none;
   color: #9CA3AF;
-  font-size: 14px;
+  font-size: 12px;
+  font-weight: 400;
   cursor: pointer;
   border-radius: 1.5rem;
   transition: all 0.2s ease;
@@ -48,7 +49,7 @@
 }
 
 .date-tab.active {
-  background-color: #333333;
+  background-color: #23333D;
   color: #FFFFFF;
 }
 
@@ -62,7 +63,7 @@
   background-color: #23333D;
   padding: 1rem;
   border-radius: 1.5rem;
-  margin-bottom: 2rem;
+  margin-bottom: 16px;
 }
 
 .products-section {
@@ -76,12 +77,11 @@
 .timer-info {
   color: #9CA3AF;
   font-size: 0.875rem;
-  margin-bottom: 1rem;
   text-align: center;
 }
 .timer-info-1 {
   color: #ffffff;
-  font-size: 1.25rem;
+  font-size: 20px;
   margin-bottom: 1rem;
   text-align: center;
 }
@@ -112,15 +112,14 @@
 
 .timer-separator {
   color: #46C800;
-  font-weight: bold;
-  font-size: 1.5rem;
+  font-size: 20px;
+  margin-bottom: 20px;
 }
 
 .products-grid {
   display: grid;
   grid-template-columns: 50% 50%;
   gap: 12px;
-  padding: 16px;
 }
 
 .product-card {
@@ -131,6 +130,7 @@
 }
 
 .product-image {
+  border-radius: 20px;
   cursor: pointer;
   object-fit: contain;
   margin-bottom: 8px;
@@ -157,10 +157,10 @@
 }
 
 .product-name {
-  font-size: 13px;
+  font-size: 12px;
   color: #6F7381;
   margin-bottom: 4px;
-  font-weight: 500;
+  font-weight: 400;
   text-align: left;
 }
 
@@ -171,14 +171,14 @@
 }
 
 .sale-price {
-  font-size: 17px;
-  font-weight: bold;
+  font-size: 16px;
+  font-weight: 500;
   color: #0F1F29;
 }
 
 .original-price {
-  padding: 1px;
-  font-size: 15px;
+  padding: 3px;
+  font-size: 12px;
   color: #9CA3AF;
   text-decoration: line-through;
 }
@@ -298,6 +298,8 @@
 }
 
 .notification-content {
+  font-weight: 300;
+  opacity: 69%;
   display: flex;
   gap: 12px;
   align-items: flex-start;
@@ -320,11 +322,12 @@
 .notification-button {
   background-color: #46C800;
   color: #0F1F29;
+  font-size: 14px;
   border: none;
   padding: 12px;
   border-radius: 8px;
   font-size: 14px;
-  font-weight: 500;
+  font-weight: 450;
   cursor: pointer;
   transition: background-color 0.2s;
   width: 100%;

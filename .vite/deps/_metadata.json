@@ -1,0 +1,46 @@
+{
+  "hash": "b3547eb5",
+  "configHash": "c60844e9",
+  "lockfileHash": "0695adce",
+  "browserHash": "d8d21b29",
+  "optimized": {
+    "react": {
+      "src": "../../node_modules/.pnpm/react@19.1.0/node_modules/react/index.js",
+      "file": "react.js",
+      "fileHash": "17c7d36d",
+      "needsInterop": true
+    },
+    "react-dom/client": {
+      "src": "../../node_modules/.pnpm/react-dom@19.1.0_react@19.1.0/node_modules/react-dom/client.js",
+      "file": "react-dom_client.js",
+      "fileHash": "9fdc4bc1",
+      "needsInterop": true
+    },
+    "react-icons/fa": {
+      "src": "../../node_modules/.pnpm/react-icons@5.5.0_react@19.1.0/node_modules/react-icons/fa/index.mjs",
+      "file": "react-icons_fa.js",
+      "fileHash": "f0e3a820",
+      "needsInterop": false
+    },
+    "react-toastify": {
+      "src": "../../node_modules/.pnpm/react-toastify@11.0.5_react-dom@19.1.0_react@19.1.0__react@19.1.0/node_modules/react-toastify/dist/index.mjs",
+      "file": "react-toastify.js",
+      "fileHash": "2a762bc4",
+      "needsInterop": false
+    },
+    "react-icons/io": {
+      "src": "../../node_modules/.pnpm/react-icons@5.5.0_react@19.1.0/node_modules/react-icons/io/index.mjs",
+      "file": "react-icons_io.js",
+      "fileHash": "55ffce7a",
+      "needsInterop": false
+    }
+  },
+  "chunks": {
+    "chunk-EKZE2NRO": {
+      "file": "chunk-EKZE2NRO.js"
+    },
+    "chunk-T4JQ6PJL": {
+      "file": "chunk-T4JQ6PJL.js"
+    }
+  }
+}

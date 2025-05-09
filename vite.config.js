@@ -5,4 +5,5 @@ import tailwindcss from '@tailwindcss/vite'
 export default defineConfig(({ mode }) => ({
   plugins: [react(), tailwindcss()],
   base: mode === 'production' ? '/toki/flash-deal/' : '/',
+  // base: mode === 'production' ? '/toki/flash-deal/J3vWx/test/' : '/',
 }))
